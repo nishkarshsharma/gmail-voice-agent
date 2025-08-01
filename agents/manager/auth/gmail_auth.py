@@ -7,7 +7,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+SCOPES = ["https://mail.google.com/"]
 
 
 def main():
@@ -15,37 +15,44 @@ def main():
   Lists the user's Gmail labels.
   """
   creds = None
+  # Define paths relative to this script's location
+  script_dir = os.path.dirname(__file__)
+  token_path = os.path.join(script_dir, "token.json")
+  credentials_path = os.path.join(script_dir, "credentials.json")
+
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
   # time.
-  if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+  if os.path.exists(token_path):
+    creds = Credentials.from_authorized_user_file(token_path, SCOPES)
   # If there are no (valid) credentials available, let the user log in.
   if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
     else:
       flow = InstalledAppFlow.from_client_secrets_file(
-          "credentials.json", SCOPES
+          credentials_path, SCOPES
       )
       creds = flow.run_local_server(port=0)
     # Save the credentials for the next run
-    with open("token.json", "w") as token:
+    with open(token_path, "w") as token:
       token.write(creds.to_json())
 
   try:
     # Call the Gmail API
-    service = build("gmail", "v1", credentials=creds)
-    results = service.users().labels().list(userId="me").execute()
-    labels = results.get("labels", [])
+    return build("gmail", "v1", credentials=creds)
+    # results = service.users().labels().list(userId="me").execute()
+    # labels = results.get("labels", [])
 
-    if not labels:
-      print("No labels found.")
-      return
-    print("Labels:")
-    for label in labels:
-      print(label["name"])
+    # if not labels:
+    #   print("No labels found.")
+    #   return
+    # print("Labels:")
+    # for label in labels:
+    #   print(label["name"])
 
   except HttpError as error:
     # TODO(developer) - Handle errors from gmail API.
     print(f"An error occurred: {error}")
+
+  
